@@ -2,13 +2,23 @@ import csv
 import urllib
 import pandas as pd
 from bs4 import BeautifulSoup
+from retrying import retry
+import sys
 
+def is_io_error(exception):
+    return isinstance(exception, IOError)
 
+@retry(retry_on_exception=is_io_error, stop_max_attempt_number=10, wait_random_min=5000, wait_random_max=10000)
 def link_to_lxmlsoup(link):
-    html = urllib.urlopen(link).read()
-    soup = BeautifulSoup(html, 'lxml')
-    return soup
-
+    try:
+        html = urllib.urlopen(link).read()
+        soup = BeautifulSoup(html, 'lxml')
+        return soup
+    except IOError:
+        print "IOError detected. Attempting Reconnection. Program will be terminated after 10 Unsuccesful Connection"
+    except:
+        print "Unexpected Error", sys.exc_info()[0]
+        raise
 
 def soup_to_txt(soup, txt_output):
     text_file = open(txt_output, "w")
