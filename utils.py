@@ -8,7 +8,7 @@ import sys
 def is_io_error(exception):
     return isinstance(exception, IOError)
 
-@retry(retry_on_exception=is_io_error, stop_max_attempt_number=10, wait_random_min=5000, wait_random_max=10000)
+@retry(retry_on_exception=is_io_error, stop_max_attempt_number=10, wait_exponential_multiplier=1000, wait_exponential_max=10000)
 def link_to_lxmlsoup(link):
     try:
         html = urllib.urlopen(link).read()
