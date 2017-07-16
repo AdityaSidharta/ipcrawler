@@ -4,6 +4,7 @@ import pandas as pd
 from bs4 import BeautifulSoup
 from retrying import retry
 import sys
+import json
 
 def is_io_error(exception):
     return isinstance(exception, IOError)
@@ -42,6 +43,10 @@ def print_counter(counter, total_len):
     print 'Progress: '+str(counter)+' out of '+ str(total_len)
     return counter, total_len
 
+def dict_to_json(dict_file, output):
+    with open(output, 'w') as fp:
+        json.dump(dict_file, fp)
+
 def dict_to_csv(dict_file, output):
     result_df = pd.DataFrame.from_dict(dict_file)
     result_df.to_csv(output)
@@ -63,3 +68,4 @@ def print_progress(time_elapsed, counter, total_len):
     eta = handle_seconds(calc_eta(time_elapsed, counter, total_len))
     cur = handle_seconds(time_elapsed)
     print "--- %s elapsed, ETA: %s ---" % (cur, eta)
+
