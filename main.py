@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from config import whois_info_list, ipaddress_info_list, csv_file
-from utils import link_to_lxmlsoup, csv_to_list, print_counter, dict_to_csv, print_progress
+from utils import link_to_lxmlsoup, csv_to_list, print_counter, dict_to_csv, print_progress, dict_to_json
 import time
 import sys
 
@@ -23,31 +23,29 @@ def whois_parser(soup, result_dict):
         except:
             item = ''
         try:
-            result_dict.setdefault(str(info),[]).append(item.encode(encoding='UTF-8'))
+            result_dict.setdefault(info,[]).append(item.encode(encoding='UTF-8'))
         except:
             print item
             raise ValueError('Encoding Error for whois_parser - item')
     return result_dict
 
 def ipaddress_parser(soup, result_dict):
+    info_list = ipaddress_info_list
     try:
-        info_list = soup.find_all('th')[:4]
-        info_list = [x.get_text().replace(':','') for x in info_list]
         item_list = soup.find_all('td')[:4]
         item_list = [x.get_text() for x in item_list]
     except:
         item_list = ['']*4
-        info_list = ipaddress_info_list
     for key, values in zip(info_list, item_list):
         try:
-            result_dict.setdefault(str(key),[]).append(values.encode(encoding='UTF-8'))
+            result_dict.setdefault(key,[]).append(values.encode(encoding='UTF-8'))
         except:
             print values
             raise ValueError('Encoding Error for ipaddress_parser - item')
     return result_dict
 
 def main():
-    raw_list = csv_to_list(csv_file)
+    raw_list = csv_to_list(csv_file)[:100]
     total_len = len(raw_list)
     counter = 0
     result_dict = dict()
@@ -70,9 +68,11 @@ def main():
             time_elapsed = time.time() - start_time
             print_progress(time_elapsed, counter, total_len)
         except:
+            dict_to_json(result_dict, 'output.json')
             dict_to_csv(result_dict, 'output.csv')
             print "Unexpected Error", sys.exc_info()[0]
             raise
+    dict_to_json(result_dict, 'output.json')
     dict_to_csv(result_dict, 'output.csv')
 
 

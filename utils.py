@@ -2,13 +2,24 @@ import csv
 import urllib
 import pandas as pd
 from bs4 import BeautifulSoup
+from retrying import retry
+import sys
+import json
 
+def is_io_error(exception):
+    return isinstance(exception, IOError)
 
+@retry(retry_on_exception=is_io_error, stop_max_attempt_number=10, wait_exponential_multiplier=1000, wait_exponential_max=10000)
 def link_to_lxmlsoup(link):
-    html = urllib.urlopen(link).read()
-    soup = BeautifulSoup(html, 'lxml')
-    return soup
-
+    try:
+        html = urllib.urlopen(link).read()
+        soup = BeautifulSoup(html, 'lxml')
+        return soup
+    except IOError:
+        print "IOError detected. Attempting Reconnection. Program will be terminated after 10 Unsuccesful Connection"
+    except:
+        print "Unexpected Error", sys.exc_info()[0]
+        raise
 
 def soup_to_txt(soup, txt_output):
     text_file = open(txt_output, "w")
@@ -32,6 +43,10 @@ def print_counter(counter, total_len):
     print 'Progress: '+str(counter)+' out of '+ str(total_len)
     return counter, total_len
 
+def dict_to_json(dict_file, output):
+    with open(output, 'w') as fp:
+        json.dump(dict_file, fp)
+
 def dict_to_csv(dict_file, output):
     result_df = pd.DataFrame.from_dict(dict_file)
     result_df.to_csv(output)
@@ -53,3 +68,4 @@ def print_progress(time_elapsed, counter, total_len):
     eta = handle_seconds(calc_eta(time_elapsed, counter, total_len))
     cur = handle_seconds(time_elapsed)
     print "--- %s elapsed, ETA: %s ---" % (cur, eta)
+
